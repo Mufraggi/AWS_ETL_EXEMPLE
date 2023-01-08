@@ -24,6 +24,9 @@ jobs:
     - name: cd
       run: cd cron
 
+    - name: pwd
+      run: pwd
+
     - name: Build
       run: go build -v ./...
 
