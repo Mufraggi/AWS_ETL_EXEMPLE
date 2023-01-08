@@ -22,8 +22,8 @@ jobs:
         go-version: 1.19
 
 
-    - name: Build
+    - name: Build cron
       run: cd cron && go build -v ./...
 
-    - name: Test
+    - name: Test cron
       run: cd cron && go test -v ./...
