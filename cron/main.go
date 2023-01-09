@@ -3,11 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 )
 
-const url = "https://opensky-network.org/api/flights/arrival?airport=EDDF&begin=1517227200&end=1517230800"
+const urlStatic = "https://opensky-network.org/api/flights/arrival?airport=EDDF&begin=1517227200&end=1517230800"
 
 //func init() {
 //}
@@ -28,7 +28,7 @@ type ArrivalRes struct {
 }
 
 func main() {
-	aa, _ := getListing(url)
+	aa, _ := getListing(urlStatic)
 	for _, a := range aa {
 		fmt.Println(a)
 	}
@@ -50,7 +50,7 @@ func getListing(url string) ([]ArrivalRes, error) {
 	}
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
