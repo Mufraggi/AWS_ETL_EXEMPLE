@@ -58,6 +58,8 @@ func TestClient(t *testing.T) {
 	if err != nil {
 		t.Errorf("getListing error %v", err)
 	}
-	a := reflect.DeepEqual(res, apiReturn)
+	if !reflect.DeepEqual(res, apiReturn) {
+		t.Errorf("the res and apiReturn is not egals")
+	}
 	st.Expect(t, gock.IsDone(), true)
 }
