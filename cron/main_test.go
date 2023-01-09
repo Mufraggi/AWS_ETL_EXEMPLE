@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/h2non/gock"
 	"github.com/nbio/st"
 	"reflect"
@@ -47,7 +46,6 @@ func TestClient(t *testing.T) {
 		DepartureAirportCandidatesCount:  0,
 		ArrivalAirportCandidatesCount:    0,
 	})
-	fmt.Println(apiReturn)
 	gock.New("http://localhost:8080/api").
 		MatchParam("airport", "EDDF").
 		MatchParam("begin", "1517227200").
@@ -60,8 +58,6 @@ func TestClient(t *testing.T) {
 	if err != nil {
 		t.Errorf("getListing error %v", err)
 	}
-	fmt.Println(res)
 	a := reflect.DeepEqual(res, apiReturn)
-	fmt.Println("ici", a)
 	st.Expect(t, gock.IsDone(), true)
 }
