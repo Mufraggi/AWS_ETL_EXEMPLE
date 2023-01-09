@@ -1,20 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"github.com/h2non/gock"
 	"github.com/nbio/st"
 	"reflect"
 	"testing"
 )
 
-func TestAbs(t *testing.T) {
-	a := 1
-	if a != 1 {
-		t.Errorf("Abs(-1) = %d; want 1", a)
-	}
-}
-
-func TestClient(t *testing.T) {
+func TestClientWork(t *testing.T) {
 	defer gock.Off() // Flush pending mocks after test execution
 
 	var apiReturn []ArrivalRes
@@ -60,6 +54,22 @@ func TestClient(t *testing.T) {
 	}
 	if !reflect.DeepEqual(res, apiReturn) {
 		t.Errorf("the res and apiReturn is not egals")
+	}
+	st.Expect(t, gock.IsDone(), true)
+}
+
+func TestClientReturns404(t *testing.T) {
+	defer gock.Off()
+	gock.New("http://localhost:8080/api").
+		MatchParam("airport", "EDDF").
+		MatchParam("begin", "1517227200").
+		MatchParam("end", "1517230800").
+		Get("/flights/arrival").
+		Reply(404)
+	_, err := getListing("http://localhost:8080/api/flights/arrival?airport=EDDF&begin=1517227200&end=1517230800")
+	fmt.Println(err.Error())
+	if err == nil {
+		t.Errorf("getListing does not returing error")
 	}
 	st.Expect(t, gock.IsDone(), true)
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -45,18 +46,19 @@ func getListing(url string) ([]ArrivalRes, error) {
 	req.Header.Add("Authorization", "Basic TXVmTXVmOjNxZlA0NmV6QHZLZjR5IQ==")
 	res, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
-		return nil, nil
+		return nil, err
+	}
+	if res.StatusCode != 200 {
+		return nil, errors.New("Status code wrong")
 	}
 	defer res.Body.Close()
-
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 	return deserialize(body)
 }
+
 func deserialize(res []byte) ([]ArrivalRes, error) {
 	var data []ArrivalRes
 	if err := json.Unmarshal(res, &data); err != nil {
