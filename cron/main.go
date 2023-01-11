@@ -6,12 +6,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 )
 
-const urlStatic = "https://opensky-network.org/api/flights/arrival?airport=EDDF&begin=1517227200&end=1517230800"
+var urlStatic string
 
-//func init() {
-//}
+func init() {
+	fmt.Println("FOO:", os.Getenv("urlApi"))
+	urlStatic = os.Getenv("urlApi")
+}
 
 type ArrivalRes struct {
 	Icao24                           string  `json:"icao24"`
@@ -29,34 +32,37 @@ type ArrivalRes struct {
 }
 
 func main() {
-	aa, _ := getListing(urlStatic)
-	for _, a := range aa {
-		fmt.Println(a)
-	}
+	getListing(urlStatic)
 }
 
 func getListing(url string) ([]ArrivalRes, error) {
 	client := &http.Client{}
-
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := initReq(url)
 	if err != nil {
-		fmt.Println(err)
-		return nil, nil
+		return nil, err
 	}
-	req.Header.Add("Authorization", "Basic TXVmTXVmOjNxZlA0NmV6QHZLZjR5IQ==")
 	res, err := client.Do(req)
+	defer res.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 	if res.StatusCode != 200 {
-		return nil, errors.New("Status code wrong")
+		return nil, errors.New(fmt.Sprintf("error status code: %d", res.StatusCode))
 	}
-	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 	return deserialize(body)
+}
+
+func initReq(url string) (*http.Request, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Authorization", "Basic TXVmTXVmOjNxZlA0NmV6QHZLZjR5IQ==")
+	return req, nil
 }
 
 func deserialize(res []byte) ([]ArrivalRes, error) {
@@ -67,5 +73,3 @@ func deserialize(res []byte) ([]ArrivalRes, error) {
 	}
 	return data, nil
 }
-
-//https://medium.com/zus-health/mocking-outbound-http-requests-in-go-youre-probably-doing-it-wrong-60373a38d2aa
