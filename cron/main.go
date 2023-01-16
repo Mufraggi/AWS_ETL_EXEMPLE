@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/aws/aws-lambda-go/lambda"
 	"io"
 	"net/http"
 	"os"
@@ -31,8 +33,18 @@ type ArrivalRes struct {
 	ArrivalAirportCandidatesCount    int     `json:"arrivalAirportCandidatesCount"`
 }
 
+type MyEvent struct {
+	Name string `json:"name"`
+}
+
 func main() {
-	getListing(urlStatic)
+	lambda.Start(HandleRequest)
+}
+
+func HandleRequest(ctx context.Context, name MyEvent) (string, error) {
+	a, _ := getListing(urlStatic)
+	printList(a)
+	return fmt.Sprintf("Hello %s!", name.Name), nil
 }
 
 func getListing(url string) ([]ArrivalRes, error) {
@@ -72,4 +84,10 @@ func deserialize(res []byte) ([]ArrivalRes, error) {
 		return nil, err
 	}
 	return data, nil
+}
+
+func printList(list []ArrivalRes) {
+	for _, a := range list {
+		fmt.Println(a)
+	}
 }
