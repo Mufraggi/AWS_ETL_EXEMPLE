@@ -2,7 +2,6 @@ package aws
 
 import (
 	"context"
-	"fmt"
 	"github.com/Mufraggi/AWS_ETL_EXEMPLE/utils/logger"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -18,11 +17,6 @@ type Connection struct {
 
 func New() (*Connection, error) {
 	s := session.Must(session.NewSession())
-
-	// cfg, err := config.LoadDefaultConfig(context.Background())
-	//if err != nil {
-	//	return nil, err
-	//}
 	return &Connection{
 		sqs:      sqs.New(s),
 		queueURL: os.Getenv("QUEUE_URL"),
@@ -31,7 +25,6 @@ func New() (*Connection, error) {
 
 func (c *Connection) SendSqsMsg(ctx context.Context, message string) error {
 	log := logger.GetCLoggerFromContext(ctx)
-	fmt.Println(c.queueURL)
 	messageInput := &sqs.SendMessageInput{
 		MessageBody: &message,
 		QueueUrl:    &c.queueURL,

@@ -2,35 +2,29 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
+	"github.com/Mufraggi/AWS_ETL_EXEMPLE/utils/aws"
+	"github.com/Mufraggi/AWS_ETL_EXEMPLE/utils/clientApi"
+	"github.com/Mufraggi/AWS_ETL_EXEMPLE/utils/logger"
 	"github.com/aws/aws-lambda-go/lambda"
-	"io"
-	"net/http"
-	"os"
+	"go.uber.org/zap"
 )
 
-var urlStatic string
+var ctx context.Context
 
 func init() {
-	fmt.Println("FOO:", os.Getenv("urlApi"))
-	urlStatic = os.Getenv("urlApi")
-}
+	log, _ := zap.NewProduction()
+	c, err := aws.New()
+	// todo reprendre le intialisation du aws et client api
+	if err != nil {
+		log.Fatal("Aws set up problems", zap.Error(err))
+	}
+	cApi := clientApi.New()
+	ctx = context.Background()
 
-type ArrivalRes struct {
-	Icao24                           string  `json:"icao24"`
-	FirstSeen                        int     `json:"firstSeen"`
-	EstDepartureAirport              *string `json:"estDepartureAirport"`
-	LastSeen                         int     `json:"lastSeen"`
-	EstArrivalAirport                string  `json:"estArrivalAirport"`
-	Callsign                         string  `json:"callsign"`
-	EstDepartureAirportHorizDistance *int    `json:"estDepartureAirportHorizDistance"`
-	EstDepartureAirportVertDistance  *int    `json:"estDepartureAirportVertDistance"`
-	EstArrivalAirportHorizDistance   int     `json:"estArrivalAirportHorizDistance"`
-	EstArrivalAirportVertDistance    int     `json:"estArrivalAirportVertDistance"`
-	DepartureAirportCandidatesCount  int     `json:"departureAirportCandidatesCount"`
-	ArrivalAirportCandidatesCount    int     `json:"arrivalAirportCandidatesCount"`
+	ctx = aws.Inject(ctx, c)
+	ctx = logger.Inject(ctx, log)
+	ctx = clientApi.Inject(ctx, cApi)
 }
 
 type MyEvent struct {
@@ -42,51 +36,18 @@ func main() {
 }
 
 func HandleRequest(ctx context.Context, name MyEvent) (string, error) {
-	a, _ := getListing(urlStatic)
+	log := logger.GetCLoggerFromContext(ctx)
+	c := clientApi.GetClientApiFromContext(ctx)
+	a, err := c.GetListing()
+	if err != nil {
+		log.Error("Couldn't send sqs msg", zap.Error(err))
+		return "", err
+	}
 	printList(a)
 	return fmt.Sprintf("Hello %s!", name.Name), nil
 }
 
-func getListing(url string) ([]ArrivalRes, error) {
-	client := &http.Client{}
-	req, err := initReq(url)
-	if err != nil {
-		return nil, err
-	}
-	res, err := client.Do(req)
-	defer res.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-	if res.StatusCode != 200 {
-		return nil, errors.New(fmt.Sprintf("error status code: %d", res.StatusCode))
-	}
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	return deserialize(body)
-}
-
-func initReq(url string) (*http.Request, error) {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Authorization", "Basic TXVmTXVmOjNxZlA0NmV6QHZLZjR5IQ==")
-	return req, nil
-}
-
-func deserialize(res []byte) ([]ArrivalRes, error) {
-	var data []ArrivalRes
-	if err := json.Unmarshal(res, &data); err != nil {
-		fmt.Println("failed to unmarshal:", err)
-		return nil, err
-	}
-	return data, nil
-}
-
-func printList(list []ArrivalRes) {
+func printList(list []clientApi.ArrivalRes) {
 	for _, a := range list {
 		fmt.Println(a)
 	}

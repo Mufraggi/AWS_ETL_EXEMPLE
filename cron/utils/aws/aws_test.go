@@ -47,7 +47,6 @@ func TestQueue(t *testing.T) {
 		sqs:      getMockSQSClient(),
 		queueURL: queueUrlSqs,
 	}
-	t.Setenv("XYZ_URL", "http://example.com")
 	c.SendSqsMsg(ctx, "aaaaaa")
 
 	message, _ := c.sqs.ReceiveMessage(&sqs.ReceiveMessageInput{
