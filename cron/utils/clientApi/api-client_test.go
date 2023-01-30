@@ -42,7 +42,9 @@ func initArrival() []ArrivalRes {
 
 func TestClientWork(t *testing.T) {
 	defer gock.Off() // Flush pending mocks after test execution
+	t.Setenv("urlApi", "http://localhost:8080/api/flights/arrival?airport=EDDF&begin=1517227200&end=1517230800")
 	apiReturn := initArrival()
+	cApi := New()
 	gock.New("http://localhost:8080/api").
 		MatchParam("airport", "EDDF").
 		MatchParam("begin", "1517227200").
@@ -51,7 +53,7 @@ func TestClientWork(t *testing.T) {
 		Reply(200).
 		JSON(apiReturn)
 
-	res, err := GetListing("http://localhost:8080/api/flights/arrival?airport=EDDF&begin=1517227200&end=1517230800")
+	res, err := cApi.GetListing()
 	if err != nil {
 		t.Errorf("GetListing error %v", err)
 	}
@@ -62,8 +64,10 @@ func TestClientWork(t *testing.T) {
 }
 
 func TestClientWorkEmptyList(t *testing.T) {
+	t.Setenv("urlApi", "http://localhost:8080/api/flights/arrival?airport=EDDF&begin=1517227200&end=1517230800")
 	defer gock.Off() // Flush pending mocks after test execution
 	apiReturn := make([]ArrivalRes, 0)
+	cApi := New()
 	gock.New("http://localhost:8080/api").
 		MatchParam("airport", "EDDF").
 		MatchParam("begin", "1517227200").
@@ -72,7 +76,7 @@ func TestClientWorkEmptyList(t *testing.T) {
 		Reply(200).
 		JSON(apiReturn)
 
-	res, err := GetListing("http://localhost:8080/api/flights/arrival?airport=EDDF&begin=1517227200&end=1517230800")
+	res, err := cApi.GetListing()
 	if err != nil {
 		t.Errorf("GetListing error %v", err)
 	}
@@ -84,13 +88,15 @@ func TestClientWorkEmptyList(t *testing.T) {
 
 func TestClientReturns404(t *testing.T) {
 	defer gock.Off()
+	t.Setenv("urlApi", "http://localhost:8080/api/flights/arrival?airport=EDDF&begin=1517227200&end=1517230800")
+	cApi := New()
 	gock.New("http://localhost:8080/api").
 		MatchParam("airport", "EDDF").
 		MatchParam("begin", "1517227200").
 		MatchParam("end", "1517230800").
 		Get("/flights/arrival").
 		Reply(404)
-	_, err := GetListing("http://localhost:8080/api/flights/arrival?airport=EDDF&begin=1517227200&end=1517230800")
+	_, err := cApi.GetListing()
 	if err == nil {
 		t.Errorf("GetListing does not returing error")
 	}
